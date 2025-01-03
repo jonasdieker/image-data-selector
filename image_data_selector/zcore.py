@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path
 from typing import Dict
 
@@ -13,7 +14,10 @@ def zcore_score(
 ) -> np.ndarray:
 
     with open(embeddings_file, "rb") as f:
-        embeddings = np.load(f)
+        embeddings = pickle.load(f)
+
+    image_paths = list(embeddings.keys())
+    embeddings = np.array(list(embeddings.values()))
 
     embed_info = preprocess(embeddings)
 
@@ -21,9 +25,17 @@ def zcore_score(
         embeddings, embed_info, n_sample, sample_dim, redund_nn, redund_exp
     )
 
-    scores = (scores - np.mean(scores)) / (np.max(scores) - np.min(scores))
+    scores = (scores - np.mean(scores)) / abs(np.max(scores) - np.min(scores))
+    scores = scores.astype(np.float32)
 
-    return scores.astype(np.float32)
+    zscore_file = Path(*embeddings_file.parts[:-1]) / "_".join(
+        ["zscores"] + embeddings_file.stem.split("_")[1:] + [".npy"]
+    )
+    zscore_dict = dict(zip(image_paths, scores))
+    with open(zscore_file, "wb") as f:
+        np.save(f, zscore_dict)
+
+    return zscore_dict
 
 
 def sample_score(
@@ -60,7 +72,7 @@ def sample_score(
         else:
             # decrease score of nearest neighbors
             nn = nn[:redund_nn]
-            dist_penalty = 1 / (nn_dist[nn] ** redund_exp)
+            dist_penalty = 1 / ((nn_dist[nn] ** redund_exp) + 1e-12)
             dist_penalty /= sum(dist_penalty)
             scores[nn] -= dist_penalty
 
@@ -77,3 +89,14 @@ def preprocess(embeddings: np.ndarray):
         "median": np.median(embeddings, axis=0),
     }
     return embed_info
+
+
+if __name__ == "__main__":
+    embeddings_file = Path("embeddings_2025-01-03_20-07-08.npy")
+    n_sample = 50
+    sample_dim = 2
+    redund_nn = 4
+    # auto-tune by size of embedding space?
+    redund_exp = 2
+
+    zcore_score(embeddings_file, n_sample, sample_dim, redund_nn, redund_exp)

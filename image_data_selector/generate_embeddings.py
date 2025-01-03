@@ -1,3 +1,4 @@
+import pickle
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -68,6 +69,8 @@ def get_embeddings(dataloader: DataLoader, model: str = "resnet18") -> List[np.n
 
     if model == "resnet18":
         model: torch.nn.Module = resnet18(pretrained=True)
+        # throw away final dense layer
+        model = torch.nn.Sequential(*list(model.children())[:-2])
     else:
         raise ValueError(f"Model '{model}' not supported")
 
@@ -75,10 +78,12 @@ def get_embeddings(dataloader: DataLoader, model: str = "resnet18") -> List[np.n
     for image_path, images in dataloader:
         images.to(device)
         embedding = model(images)
+        embedding = embedding.cpu().detach().numpy()
+        embedding = embedding.reshape(embedding.shape[0], -1)
         embeddings.update(dict(zip(image_path, embedding)))
 
     with open(f"embeddings_{time_string}.npy", "wb") as f:
-        np.save(f, embeddings)
+        pickle.dump(embeddings, f)
     return embeddings
 
 
