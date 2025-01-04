@@ -19,6 +19,16 @@ def parse_args() -> Namespace:
     parser.add_argument("--redund_exp", type=int, default=10, help="Exponent for redundancy score.")
     return parser.parse_args()
 
+
+def load_zscore_dict(zscore_file: str):
+    try:
+        with open(zscore_file, "rb") as f:
+            zscore_dict = pickle.load(f)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Z-score file {zscore_file} not found") from e
+    return zscore_dict
+
+
 def main():
     args = parse_args()
 
@@ -38,9 +48,10 @@ def main():
 
     zscore_dict = zcore_score(embeddings_dict, args.n_sample, args.sample_dim, args.redund_nn, args.redund_exp)
 
-    print(zscore_dict)
+    with open("zscore_dict.pkl", "wb") as f:
+        pickle.dump(zscore_dict, f)
 
-    # visualize images with highest and lowest z-scores
+    # TODO: visualize images with highest and lowest z-scores
 
 
 if __name__ == "__main__":
