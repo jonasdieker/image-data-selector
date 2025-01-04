@@ -85,12 +85,3 @@ def get_embeddings(dataloader: DataLoader, model: str = "resnet18") -> List[np.n
     with open(f"embeddings_{time_string}.npy", "wb") as f:
         pickle.dump(embeddings, f)
     return embeddings
-
-
-if __name__ == "__main__":
-    image_dir = Path("data/train")
-    dataset = ImageDataset(image_dir)
-    dataloader = DataLoader(
-        dataset, batch_size=4, collate_fn=custom_collate_fn, shuffle=False
-    )
-    get_embeddings(dataloader)
