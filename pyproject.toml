@@ -1,18 +1,20 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "image-data-selector"
 version = "0.1.0"
 description = "Zero-Shot Image Data Selector"
-authors = ["Jonas Dieker jonasdieker05@gmail.com"]
-license = "MIT"
-readme = "README.md"
+authors = [{name = "Jonas Dieker", email = "jonasdieker05@gmail.com"}]
+requires-python = ">=3.8"
 
-[project.dependencies]
-pytorch = "torch>=2.0.0"
-torchvision = "torchvision>=0.15.0"
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "argparse",
+    "matplotlib",
+]
 
 [tool.setuptools.packages.find]
 include = ["image_data_selector"]  # Automatically includes angsa_detection and its subpackages
